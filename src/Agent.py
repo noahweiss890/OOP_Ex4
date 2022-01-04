@@ -3,8 +3,12 @@ represents an agent
 """
 import math
 
-from src import Pokemon, Node
-from src.Point2D import Point2D
+from typing import List
+import Pokemon
+import Node
+from Point2D import Point2D
+# from src import Pokemon, Node
+# from src.Point2D import Point2D
 
 
 def time_to_call_move(pokemon: Pokemon, src: Node, dest: Node) -> float:
@@ -22,6 +26,13 @@ class Agent:
         self._pos = Point2D(pos)
         self._future_calls = []
         self._future_moves = []
+
+    def update_agent(self, value: float, src: int, dest: int, speed: float, pos: tuple):
+        self._value = value
+        self._src = src
+        self._dest = dest
+        self._speed = speed
+        self._pos = Point2D(pos)
 
     def getID(self) -> int:
         return self._id
@@ -53,8 +64,8 @@ class Agent:
     def getPos(self) -> Point2D:
         return self._pos
 
-    def setPos(self, pos: tuple) -> None:
-        self._pos = Point2D(pos)
+    def setPos(self, pos: Point2D) -> None:
+        self._pos = pos
 
     def getFuture_calls(self) -> list:
         return self._future_calls
@@ -62,7 +73,13 @@ class Agent:
     def getFuture_moves(self) -> list:
         return self._future_moves
 
-    def add_pokemon(self, pokemon: Pokemon, path: list, time: float, ttl: float, src: Node, dest: Node) -> None:
-        self._future_calls += path[1:-1]
+    def add_pokemon(self, pokemon: Pokemon, path: List[int], time: float, ttl: float, src: Node, dest: Node) -> None:
+        new_path = []
+        for i in path[:-1]:
+            new_path.append((i, -1))
+        if self._future_calls == []:
+            self._future_calls = new_path
+        else:
+            self._future_calls += new_path[1:]
         self._future_calls.append((pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()))
         self._future_moves.append(ttl - (time + time_to_call_move(pokemon, src, dest)) / self._speed)

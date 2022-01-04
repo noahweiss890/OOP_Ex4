@@ -5,30 +5,48 @@ import heapq
 import math
 
 from typing import List
-
-from client import Client
-from src import Pokemon, Point2D, Agent
-from src.Graph import Graph
+import Pokemon
+from Point2D import Point2D
+import Agent
+from Graph import Graph
+from Edge import Edge
 
 EPSILON = 0.001
 
 
-def find_edge_with_pokemon(type: int, pos: Point2D, graph: Graph):
-    for e in graph.get_all_e():
-        if type > 0 and e.getSrc() < e.getDest():
-            if math.dist(graph.get_all_v().get(e.getSrc()).getPos(), pos) + math.dist(pos, graph.get_all_v().get(e.getDest()).getPos()) < math.dist(graph.get_all_v().get(e.getSrc()).getPos(), graph.get_all_v().get(e.getDest()).getPos()) + EPSILON:
+def find_edge_with_pokemon(type: int, pos: tuple, graph: Graph) -> Edge:
+    for e in graph.get_all_e().values():
+        if (type > 0 and e.getSrc() < e.getDest()) or (type < 0 and e.getSrc() > e.getDest()):
+            if distance(graph.get_all_v().get(e.getSrc()).getPosAsTuple(), pos) + distance(pos, graph.get_all_v().get(e.getDest()).getPosAsTuple()) < distance(graph.get_all_v().get(e.getSrc()).getPosAsTuple(), graph.get_all_v().get(e.getDest()).getPosAsTuple()) + EPSILON:
                 return e
     print("POKEMON NOT ON GRAPH!")
 
 
+def distance(p1: tuple, p2: tuple) -> float:
+    return math.sqrt( ((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2) )
+
+
 class GraphAlgos:
 
-    def __init__(self, graph_json: dict, agents: dict):
-        self.graph = Graph(graph_json)
-        self.agents = agents
+    def __init__(self, graph: Graph):
+        self._graph = graph
+        self._agents = {}
+        self._pokemon = []
 
-    def getGraph(self):
-        return self.graph
+    def getGraph(self) -> Graph:
+        return self._graph
+
+    def getAgents(self):
+        return self._agents
+
+    def getPokemon(self):
+        return self._pokemon
+
+    def add_agent(self, agent: Agent) -> None:
+        self._agents[agent.getID()] = agent
+
+    def add_pokemon(self, poke: Pokemon) -> None:
+        self._pokemon.append(poke)
 
     def shortest_path(self, id1: int, id2: int) -> (float, list):
         """
@@ -38,15 +56,15 @@ class GraphAlgos:
         @return: The distance of the path, a list of the nodes ids that the path goes through
         """
         global node_weight
-        if id1 not in self.graph.get_all_v() or id2 not in self.graph.get_all_v():  # If there is no path between id1 and id2, or one of them dose not exist the function returns (float('inf'),[])
+        if id1 not in self._graph.get_all_v() or id2 not in self._graph.get_all_v():  # If there is no path between id1 and id2, or one of them dose not exist the function returns (float('inf'),[])
             return float('inf'), []
         if id1 == id2:  # if both ids entered are the same, the path is just the node itself and the cost is zero
             return 0.0, [id1]
-        dijkstra = {i: float('inf') for i in self.graph.get_all_v()}  # turning all "weights" to infinity
+        dijkstra = {i: float('inf') for i in self._graph.get_all_v()}  # turning all "weights" to infinity
         dijkstra[id1] = 0  # turns start node's "weight" to 0
         pq = []
         prev = {}
-        for n in self.graph.get_all_v():  # assign all nodes prev = None
+        for n in self._graph.get_all_v():  # assign all nodes prev = None
             prev[n] = None
             if n != id1:
                 heapq.heappush(pq, (float('inf'), n))  # push into heapified list pq
@@ -59,7 +77,7 @@ class GraphAlgos:
                 return float('inf'), []
             if i == id2:  # found path
                 break
-            for dest, w in self.graph.all_out_edges_of_node(i).items():  # all neighbors of i
+            for dest, w in self._graph.all_out_edges_of_node(i).items():  # all neighbors of i
                 if dijkstra[dest] > dijkstra[i] + w:
                     pq.remove((dijkstra[dest], dest))  # removes id from pq
                     dijkstra[dest] = dijkstra[i] + w  # relaxes
@@ -109,11 +127,11 @@ class GraphAlgos:
         """
         global curr, node_w
         path_w = 0.0
-        dijkstra = {i: float('inf') for i in self.graph.get_all_v()}  # turning all "weights" to infinity
+        dijkstra = {i: float('inf') for i in self._graph.get_all_v()}  # turning all "weights" to infinity
         dijkstra[curr_node] = 0  # turns "weight" of starter node 0
         pq = []
         prev = {}
-        for n in self.graph.get_all_v():
+        for n in self._graph.get_all_v():
             prev[n] = None
             if n != curr_node:
                 heapq.heappush(pq, (float('inf'), n)) # push into heapified list pq
@@ -126,7 +144,7 @@ class GraphAlgos:
                 return [], -1
             if curr in n_list:  # found value in list
                 break
-            for neighbor, w in self.graph.all_out_edges_of_node(curr).items():  # check neighbors
+            for neighbor, w in self._graph.all_out_edges_of_node(curr).items():  # check neighbors
                 if dijkstra[neighbor] > dijkstra[curr] + w:
                     pq.remove((dijkstra[neighbor], neighbor))  # removes id from pq
                     dijkstra[neighbor] = dijkstra[curr] + w  #relaxes
@@ -150,7 +168,7 @@ class GraphAlgos:
         """
         min_weight = float('inf')
         center_node = None
-        for n in self.graph.get_all_v():  # go through all nodes in the graph
+        for n in self._graph.get_all_v():  # go through all nodes in the graph
             ecc_w = self.eccentricity(n, min_weight)  # find out what the eccentricity of the node is
             if ecc_w == float('inf'):  # if the ecc is inf then the graph is not connected and therefore there is no center
                 return None, float('inf')
@@ -166,10 +184,10 @@ class GraphAlgos:
         :param minWeight: the minWeight that has been found so far
         :return: the eccentricity of the graph from the given node
         """
-        dijkstra = {i: float('inf') for i in self.graph.get_all_v()}  # to hold all of the weights between each node to the given node
+        dijkstra = {i: float('inf') for i in self._graph.get_all_v()}  # to hold all of the weights between each node to the given node
         dijkstra[node] = 0  # weight is 0 to itself
         pq = []  # priority queue
-        for n in self.graph.get_all_v():  # to fill up the priority queue
+        for n in self._graph.get_all_v():  # to fill up the priority queue
             if n != node:
                 heapq.heappush(pq, (float('inf'), n))
             else:
@@ -183,7 +201,7 @@ class GraphAlgos:
                 return float('inf')
             if curr_w > minWeight:  # if the weight of the node is higher than the given minWeight then this is definitely not the smallest ecc so return -1 flag
                 return -1
-            for v, w in self.graph.all_out_edges_of_node(curr_n).items():  # go through all of the out edges of the curr_n
+            for v, w in self._graph.all_out_edges_of_node(curr_n).items():  # go through all of the out edges of the curr_n
                 if dijkstra[v] > dijkstra[curr_n] + w:  # if the path through curr_n has a smaller weight then its current weight then relax
                     pq.remove((dijkstra[v], v))
                     dijkstra[v] = dijkstra[curr_n] + w  # relaxing
@@ -197,7 +215,7 @@ class GraphAlgos:
         :return: how long it will take for the given agent to catch all of the pokemon its currently after
         """
         time = 0
-        position = agent.getSrc() if agent.getDest() != -1 else agent.getDest()
+        position = agent.getSrc() if agent.getDest() == -1 else agent.getDest()
         for src, dest in agent.getFuture_calls():
             ret_time, ret_path = self.shortest_path(position, src)
             time += ret_time / agent.getSpeed()
@@ -227,7 +245,7 @@ class GraphAlgos:
         min_time = float('inf')
         ans = -1
         path = []
-        for agent in self.agents.values():
+        for agent in self._agents.values():
             ret_time, ret_path = self.time_to_complete_calls_with_new_pokemon(agent, pokemon)
             if ret_time < min_time:
                 min_time = ret_time
@@ -235,14 +253,14 @@ class GraphAlgos:
                 path = ret_path
         return ans, path, min_time
 
-    def allocate_agent(self, pokemon: Pokemon, ttl: float) -> None:
+    def allocate_agent_to_pokemon(self, pokemon: Pokemon, ttl: float) -> None:
         """
         this function allocates the pokemon to an agent
         :param pokemon: a new pokemon that appeared in the game
         :param ttl: time left of the game
         """
         ans, path, time = self.fastest_agent(pokemon)
-        self.agents[ans].add_pokemon(pokemon, path, time, ttl, self.graph.get_node(pokemon.getOnEdge().getSrc), self.graph.get_node(pokemon.getOnEdge().getDest))
+        self._agents[ans].add_pokemon(pokemon, path, time, ttl, self._graph.get_node(pokemon.getOnEdge().getSrc), self._graph.get_node(pokemon.getOnEdge().getDest))
 
     def call_move(self, ttl) -> bool:
         """
@@ -251,7 +269,7 @@ class GraphAlgos:
         :return: return true if a move needs to be called
         """
         flag = False
-        for agent in self.agents.values():
+        for agent in self._agents.values():
             if abs(agent.getFuture_moves()[0] - ttl) < EPSILON:
                 agent.getFuture_moves().pop(0)
                 flag = True
@@ -259,11 +277,11 @@ class GraphAlgos:
 
     def choosing_next_edge(self) -> List[tuple]:
         """
-        this function finds out which agents need to chose their next edge and returns a list of their choices
+        this function finds out which agents need to choose their next edge and returns a list of their choices
         :return: list of agents that needed to choose their next edge with their choices
         """
         choices = []
-        for agent in self.agents.values():
+        for agent in self._agents.values():
             if agent.getDest() == -1:
                 next_call = agent.getFuture_calls()[0]
                 if next_call[0] != -1:
@@ -275,4 +293,3 @@ class GraphAlgos:
                     choices.append((agent.getID(), next_call[1]))
                     agent.getFuture_calls().pop(0)
         return choices
-

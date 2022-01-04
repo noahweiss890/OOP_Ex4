@@ -1,8 +1,8 @@
 """
 represents a pokemon
 """
-from src import Edge
-from src.Point2D import Point2D
+import Edge
+from Point2D import Point2D
 
 
 class Pokemon:

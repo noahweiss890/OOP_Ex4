@@ -1,8 +1,8 @@
 """
 represents a graph
 """
-from src.Edge import Edge
-from src.Node import Node
+from Edge import Edge
+from Node import Node
 
 
 def build_graph(json: dict) -> (dict, dict):
@@ -56,10 +56,10 @@ class Graph:
         """
         returns a dictionary of all the in edges of a given node
         """
-        return self._nodes[id1].inEdges
+        return self._nodes[id1].getInEdges()
 
     def all_out_edges_of_node(self, id1: int) -> dict:
         """
         returns a dictionary of all the out edges of a given node
         """
-        return self._nodes[id1].outEdges
+        return self._nodes[id1].getOutEdges()
