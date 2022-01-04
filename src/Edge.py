@@ -10,11 +10,11 @@ class Edge:
         self._dest = dest
         self._weight = weight
 
-    def getSrc(self):
+    def getSrc(self) -> int:
         return self._src
 
-    def getDest(self):
+    def getDest(self) -> int:
         return self._dest
 
-    def getWeight(self):
+    def getWeight(self) -> float:
         return self._weight
