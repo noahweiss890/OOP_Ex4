@@ -40,6 +40,9 @@ class Graph:
     def get_node(self, id: int) -> Node:
         return self._nodes[id]
 
+    def get_edge(self, src_dest: tuple) -> Edge:
+        return self._edges[src_dest]
+
     def get_all_v(self) -> dict:
         """
         returns a dictionary of all the nodes in the graph
@@ -63,3 +66,4 @@ class Graph:
         returns a dictionary of all the out edges of a given node
         """
         return self._nodes[id1].getOutEdges()
+

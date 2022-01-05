@@ -10,6 +10,9 @@ class Edge:
         self._dest = dest
         self._weight = weight
 
+    def __repr__(self):
+        return f"src: {self._src}, dest: {self._dest}, weight: {self._weight}"
+
     def getSrc(self) -> int:
         return self._src
 

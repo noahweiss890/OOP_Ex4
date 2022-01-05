@@ -13,3 +13,9 @@ class Point2D:
 
     def getY(self) -> float:
         return self._y
+
+    def getPosAsTuple(self) -> (float, float):
+        return self._x, self._y
+
+    def updatePos(self, pos: tuple) -> None:
+        self._x, self._y = pos

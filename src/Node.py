@@ -16,11 +16,8 @@ class Node:
     def getID(self) -> int:
         return self._id
 
-    def getPos(self) -> Point2D:
-        return self._pos
-
-    def getPosAsTuple(self) -> tuple:
-        return self._pos.getX(), self._pos.getY()
+    def getPos(self) -> (float, float):
+        return self._pos.getPosAsTuple()
 
     def getOutEdges(self):
         return self._outEdges

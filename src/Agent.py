@@ -9,10 +9,11 @@ import Node
 from Point2D import Point2D
 # from src import Pokemon, Node
 # from src.Point2D import Point2D
+from GraphAlgos import distance
 
 
 def time_to_call_move(pokemon: Pokemon, src: Node, dest: Node) -> float:
-    return (math.dist(src.getPos(), pokemon.getPos()) / math.dist(src.getPos(), dest.getPos())) * pokemon.getOnEdge.getWeight()
+    return (distance(src.getPos(), pokemon.getPos()) / distance(src.getPos(), dest.getPos())) * pokemon.getOnEdge().getWeight()
 
 
 class Agent:
@@ -26,13 +27,14 @@ class Agent:
         self._pos = Point2D(pos)
         self._future_calls = []
         self._future_moves = []
+        self._pokemons = []
 
     def update_agent(self, value: float, src: int, dest: int, speed: float, pos: tuple):
         self._value = value
         self._src = src
         self._dest = dest
         self._speed = speed
-        self._pos = Point2D(pos)
+        self._pos.updatePos(pos)
 
     def getID(self) -> int:
         return self._id
@@ -61,8 +63,8 @@ class Agent:
     def setSpeed(self, speed: float) -> None:
         self._speed = speed
 
-    def getPos(self) -> Point2D:
-        return self._pos
+    def getPos(self) -> (float, float):
+        return self._pos.getPosAsTuple()
 
     def setPos(self, pos: Point2D) -> None:
         self._pos = pos
@@ -73,13 +75,18 @@ class Agent:
     def getFuture_moves(self) -> list:
         return self._future_moves
 
-    def add_pokemon(self, pokemon: Pokemon, path: List[int], time: float, ttl: float, src: Node, dest: Node) -> None:
+    def add_pokemon(self, pokemon: Pokemon, path: List[int], time: float, src: Node, dest: Node) -> None:
         new_path = []
         for i in path[:-1]:
-            new_path.append((i, -1))
-        if self._future_calls == []:
-            self._future_calls = new_path
+            new_path.append([i, -1])
+        if not self._future_calls:
+            self._future_calls = new_path[1:]
         else:
             self._future_calls += new_path[1:]
-        self._future_calls.append((pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()))
-        self._future_moves.append(ttl - (time + time_to_call_move(pokemon, src, dest)) / self._speed)
+        self._future_calls.append([pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()])
+        last_time = self._future_moves[-1] if self._future_moves else 0
+        self._future_moves.append(last_time + ((time + time_to_call_move(pokemon, src, dest)) * 1000) / self._speed)
+        # self._pokemons.append(pokemon)
+
+    def getPokemons(self) -> list:
+        return self._pokemons

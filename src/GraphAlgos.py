@@ -6,7 +6,6 @@ import math
 
 from typing import List
 import Pokemon
-from Point2D import Point2D
 import Agent
 from Graph import Graph
 from Edge import Edge
@@ -17,13 +16,13 @@ EPSILON = 0.001
 def find_edge_with_pokemon(type: int, pos: tuple, graph: Graph) -> Edge:
     for e in graph.get_all_e().values():
         if (type > 0 and e.getSrc() < e.getDest()) or (type < 0 and e.getSrc() > e.getDest()):
-            if distance(graph.get_all_v().get(e.getSrc()).getPosAsTuple(), pos) + distance(pos, graph.get_all_v().get(e.getDest()).getPosAsTuple()) < distance(graph.get_all_v().get(e.getSrc()).getPosAsTuple(), graph.get_all_v().get(e.getDest()).getPosAsTuple()) + EPSILON:
+            if distance(graph.get_all_v().get(e.getSrc()).getPos(), pos) + distance(pos, graph.get_all_v().get(e.getDest()).getPos()) < distance(graph.get_all_v().get(e.getSrc()).getPos(), graph.get_all_v().get(e.getDest()).getPos()) + EPSILON:
                 return e
     print("POKEMON NOT ON GRAPH!")
 
 
 def distance(p1: tuple, p2: tuple) -> float:
-    return math.sqrt( ((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2) )
+    return math.sqrt(((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2))
 
 
 class GraphAlgos:
@@ -31,22 +30,35 @@ class GraphAlgos:
     def __init__(self, graph: Graph):
         self._graph = graph
         self._agents = {}
-        self._pokemon = []
+        self._pokemons = {}
+        self._current_pokemons = []
 
     def getGraph(self) -> Graph:
         return self._graph
 
-    def getAgents(self):
+    def getAgents(self) -> dict:
         return self._agents
 
-    def getPokemon(self):
-        return self._pokemon
+    def getPokemons(self) -> dict:
+        return self._pokemons
+
+    def get_agent(self, index: int) -> Agent:
+        return self._agents[index]
+
+    def get_pokemon(self, i: tuple) -> int:
+        return self._pokemons[i]
+
+    def get_current_pokemons(self) -> list:
+        return self._current_pokemons
 
     def add_agent(self, agent: Agent) -> None:
         self._agents[agent.getID()] = agent
 
-    def add_pokemon(self, poke: Pokemon) -> None:
-        self._pokemon.append(poke)
+    def add_current_pokemon(self, pokemon: tuple) -> None:
+        self._current_pokemons.append(pokemon)
+
+    def reset_current_pokemons(self) -> None:
+        self._current_pokemons = []
 
     def shortest_path(self, id1: int, id2: int) -> (float, list):
         """
@@ -214,16 +226,25 @@ class GraphAlgos:
         :param agent: an agent
         :return: how long it will take for the given agent to catch all of the pokemon its currently after
         """
+        #   (3,-1)   (5,6)    (-1,8)
+
         time = 0
-        position = agent.getSrc() if agent.getDest() == -1 else agent.getDest()
+        if agent.getDest() == -1:
+            position = agent.getSrc()
+        else:
+            time += (distance(self._graph.get_node(agent.getDest()).getPos(), agent.getPos()) / distance(self._graph.get_node(agent.getSrc()).getPos(), self._graph.get_node(agent.getDest()).getPos())) * self._graph.get_edge((agent.getSrc(), agent.getDest())).getWeight()
+            position = agent.getDest()
         for src, dest in agent.getFuture_calls():
-            ret_time, ret_path = self.shortest_path(position, src)
-            time += ret_time / agent.getSpeed()
-            position = src
-            if dest != -1:
-                time += self.getGraph().get_all_e()[(src, dest)] / agent.getSpeed()
+            if src == -1:
+                time += self.shortest_path(position, dest)[0]
                 position = dest
-        return time, position
+            else:
+                time += self.shortest_path(position, src)[0]
+                position = src
+                if dest != -1:
+                    time += self.getGraph().get_all_e()[(src, dest)].getWeight()
+                    position = dest
+        return time / agent.getSpeed(), position
 
     def time_to_complete_calls_with_new_pokemon(self, agent: Agent, pokemon: Pokemon) -> (float, list):
         """
@@ -260,9 +281,10 @@ class GraphAlgos:
         :param ttl: time left of the game
         """
         ans, path, time = self.fastest_agent(pokemon)
-        self._agents[ans].add_pokemon(pokemon, path, time, ttl, self._graph.get_node(pokemon.getOnEdge().getSrc), self._graph.get_node(pokemon.getOnEdge().getDest))
+        self._agents[ans].add_pokemon(pokemon, path, time, self._graph.get_node(pokemon.getOnEdge().getSrc()), self._graph.get_node(pokemon.getOnEdge().getDest()))
+        self._pokemons[(pokemon.getPos(), pokemon.getType())] = ans
 
-    def call_move(self, ttl) -> bool:
+    def call_move(self, total_time: float, ttl: float) -> bool:
         """
         this function checks if we need to make any moves
         :param ttl: time left of the game
@@ -270,9 +292,12 @@ class GraphAlgos:
         """
         flag = False
         for agent in self._agents.values():
-            if abs(agent.getFuture_moves()[0] - ttl) < EPSILON:
-                agent.getFuture_moves().pop(0)
-                flag = True
+            if agent.getFuture_moves():
+                if abs(total_time - agent.getFuture_moves()[0] - ttl) < 2000:
+                    agent.getFuture_moves().pop(0)
+                    # self._pokemons.pop((agent.getPokemons()[0].getPos(), agent.getPokemons()[0].getType()))
+                    # agent.getPokemons().pop(0)
+                    flag = True
         return flag
 
     def choosing_next_edge(self) -> List[tuple]:
