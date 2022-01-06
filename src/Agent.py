@@ -1,11 +1,9 @@
 """
 represents an agent
 """
-import math
 
 from typing import List
 import Pokemon
-import Node
 from Point2D import Point2D
 
 
@@ -19,7 +17,6 @@ class Agent:
         self._speed = speed
         self._pos = Point2D(pos)
         self._future_calls = []
-        self._future_moves = []
         self._pokemons = []
 
     def update_agent(self, value: float, src: int, dest: int, speed: float, pos: tuple):
@@ -65,10 +62,10 @@ class Agent:
     def getFuture_calls(self) -> list:
         return self._future_calls
 
-    def getFuture_moves(self) -> list:
-        return self._future_moves
+    def setFuture_calls(self, path: list):
+        self._future_calls = path
 
-    def add_pokemon(self, pokemon: Pokemon, path: List[int], time: float, src: Node, dest: Node) -> None:
+    def add_pokemon(self, pokemon: Pokemon, path: List[int]) -> None:
         new_path = []
         for i in path[:-1]:
             new_path.append([i, -1])
@@ -77,9 +74,22 @@ class Agent:
         else:
             self._future_calls += new_path[1:]
         self._future_calls.append([pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()])
-        # last_time = self._future_moves[-1] if self._future_moves else 0
-        # self._future_moves.append(last_time + ((time + time_to_call_move(pokemon, src, dest)) * 1000) / self._speed)
         self._pokemons.append(pokemon)
+
+    def add_pokemon_on_the_way(self, pokemon: Pokemon) -> None:
+        self._pokemons.append(pokemon)
+        if self._dest == pokemon.getOnEdge().getSrc() and self._future_calls[0][0] == pokemon.getOnEdge().getDest() and self._future_calls[0][1] == -1:
+            self._future_calls[0] = [-1, self._future_calls[0][0]]
+            return
+        else:
+            for i, call in enumerate(self._future_calls):
+                if call[0] == pokemon.getOnEdge().getSrc() and call[1] == -1 and self._future_calls[i+1][0] == pokemon.getOnEdge().getDest() and self._future_calls[i+1][1] == -1:
+                    call[1] = pokemon.getOnEdge().getDest()
+                    self._future_calls.pop(i+1)
+                    return
+                elif call[0] == pokemon.getOnEdge().getSrc() and call[1] == -1 and self._future_calls[i+1][0] == pokemon.getOnEdge().getDest():
+                    call[1] = pokemon.getOnEdge().getDest()
+                    return
 
     def delete_pokemon(self, pokemon: Pokemon) -> None:
         self._pokemons.remove(pokemon)

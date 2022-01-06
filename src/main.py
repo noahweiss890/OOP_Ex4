@@ -38,15 +38,16 @@ if __name__ == '__main__':
         client.add_agent("{\"id\":" + str(center) + "}")
 
     move_list = []
-    EPSILON = 200
+    EPSILON = 3
 
     # this commnad starts the server - the game is running now
     client.start()
     total_time = float(client.time_to_end())
-    print(total_time)
-    print((client.get_info()))
 
-    while client.is_running() == 'true':
+    info = (client.get_info())
+    info_obj = json.loads(client.get_info())
+
+    while client.is_running() == 'true' and float(client.time_to_end()) > 0 and info_obj["GameServer"]["moves"] < 10 * total_time:
 
         # get agents from the server and create Agent objects from them
         agents_obj = json.loads(client.get_agents())
@@ -73,25 +74,21 @@ if __name__ == '__main__':
             if not_exists:
                 new_poke = Pokemon(poke["value"], poke["type"], (float(x), float(y)), find_edge_with_pokemon(poke["type"], (float(x), float(y)), graph))
                 graphAlgo.allocate_agent_to_pokemon(new_poke)
-            graphAlgo.add_current_pokemon((float(x), float(y), poke["type"]))
+            graphAlgo.add_current_pokemon((float(x), float(y), poke["type"], poke["value"]))
 
-        move_list += graphAlgo.call_move(int(client.time_to_end()))
+        move_list += graphAlgo.call_move(float(client.time_to_end()))
         move_list.sort(reverse=True)
 
         # choose next edge
         allocate_list = graphAlgo.choosing_next_edge()
         for id, next_node in allocate_list:
             client.choose_next_edge('{"agent_id":'+str(id)+', "next_node_id":'+str(next_node)+'}')
-        if len(allocate_list) > 0:
-            print("ALLOCATE MOVE!")
-            client.move()
 
         move_needed = False
-        while move_list and int(client.time_to_end()) + EPSILON <= move_list[0]:
+        while move_list and float(client.time_to_end()) + EPSILON <= move_list[0]:
             move_list = move_list[1:]
             move_needed = True
         if move_needed:
-            print("MOVE LIST MOVE!")
             client.move()
 
         info = (client.get_info())
@@ -101,6 +98,6 @@ if __name__ == '__main__':
             break
 
     # game over:
+    print(client.get_info())
     client.stop()
-    client.stop_connection()
-    print((client.get_info()))
+    # client.stop_connection()

@@ -11,7 +11,7 @@ from Graph import Graph
 from Edge import Edge
 from Node import Node
 
-EPSILON = 0.0001
+EPSILON = 0.000001
 
 
 def find_edge_with_pokemon(type: int, pos: tuple, graph: Graph) -> Edge:
@@ -35,7 +35,7 @@ class GraphAlgos:
     def __init__(self, graph: Graph):
         self._graph = graph
         self._agents = {}
-        self._pokemons = {}
+        self._pokemons = []
         self._current_pokemons = []
 
     def getGraph(self) -> Graph:
@@ -44,14 +44,11 @@ class GraphAlgos:
     def getAgents(self) -> dict:
         return self._agents
 
-    def getPokemons(self) -> dict:
+    def getPokemons(self) -> list:
         return self._pokemons
 
     def get_agent(self, index: int) -> Agent:
         return self._agents[index]
-
-    def get_pokemon(self, i: tuple) -> int:
-        return self._pokemons[i]
 
     def get_current_pokemons(self) -> list:
         return self._current_pokemons
@@ -68,9 +65,9 @@ class GraphAlgos:
     def shortest_path(self, id1: int, id2: int) -> (float, list):
         """
         Returns the shortest path from node id1 to node id2 using Dijkstra's Algorithm
-        @param id1: The start node id
-        @param id2: The end node id
-        @return: The distance of the path, a list of the nodes ids that the path goes through
+        :param id1: The start node id
+        :param id2: The end node id
+        :return: The distance of the path, a list of the nodes ids that the path goes through
         """
         global node_weight
         if id1 not in self._graph.get_all_v() or id2 not in self._graph.get_all_v():  # If there is no path between id1 and id2, or one of them dose not exist the function returns (float('inf'),[])
@@ -107,43 +104,54 @@ class GraphAlgos:
             temp = prev[temp]
         return node_weight, short_path
 
-    def TSP(self, src: int, node_lst: List[int]) -> (List[int], float):
+    def run_tsp(self, id: int) -> None:
+        agent = self._agents[id]
+        cities = []
+        for call in agent.getFuture_calls():
+            if call[0] != -1 and call[1] != -1:
+                cities.append(call)
+        src = agent.getDest() if agent.getDest() != -1 else agent.getSrc()
+        new_path = self.TSP(src, cities)
+        if new_path:
+            agent.setFuture_calls(new_path)
+
+    def TSP(self, src: int, node_lst: list) -> list:
         """
         Finds the shortest path that visits all the nodes in the list. Uses helper function closestNodeFinder to
-        locate which node in the list is closest to the current node :param node_lst: A list of nodes id's :return: A
-        list of the nodes id's in the path, and the overall distance
+        locate which node in the list is closest to the current node
+        :param cities: A list of nodes id's
+        :return: A list of the nodes id's in the path, and the overall distance
         """
-        if len(node_lst) == 1:  # one value in list, return just itself and cost is zero
-            return node_lst[0], 0.0
-        path = [src]
-        cities = node_lst.copy()
-        cost = 0.0
-        curr = src
-        while True:
-            cities.remove(curr)  # remove curr from cities before sending to helper function in order to actually
-            # find closest node not including the node itself
-            if len(cities) == 1:  # only one left
-                break
-            closest_node_path = self._closestNodeFinder(cities, curr)  # returns the shorest path to the closest
-            # node and the price is cost to get there
-            path += closest_node_path[0][1:]  # add path except for first value because already added to path
-            cost += closest_node_path[1]  # update cost
-            curr = closest_node_path[0][-1]  # curr now equals what was the next closest node
-        closest_last = self.shortest_path(curr, cities[0])  # finds shortest path from last closest node to last
-        # value in cities
-        path += closest_last[1][1:]  # adds to path
-        cost += closest_last[0]  # updates cost
-        return path, cost
+        tsp_path = []
+        if len(node_lst) != 1:
+            cities = node_lst.copy()
+            curr = [0, src]
+            while len(cities) > 1:
+                closest_node_path = self._closestNodeFinder(cities, curr[1])  # returns the shortest path to the closest node
+                tsp_path.append(curr)
+                for node in closest_node_path[1:-1]:
+                    tsp_path.append([node, -1])
+                for node in cities:
+                    if closest_node_path[-1] == node[0]:
+                        curr = node  # curr now equals what was the next closest node
+                        break
+                cities.remove(curr)
+            closest_last = self.shortest_path(curr[1], cities[0][0])  # finds shortest path from last closest node to last value in cities
+            tsp_path.append(curr)
+            for node in closest_last[1][1:]:
+                tsp_path.append([node, -1])
+            tsp_path.append(cities[0])
+            tsp_path.pop(0)
+        return tsp_path
 
-    def _closestNodeFinder(self, n_list: List[int], curr_node: int) -> (List[int], float):
+    def _closestNodeFinder(self, n_list: list, curr_node: int) -> list:
         """
         TSP helper function. finds the closest node in the given list to the curr_node
-        @param n_list: List of cities to visit
-        @param curr_node: starter node
-        @return: returns the shortest path from curr_node to closest node in list and the cost to get there
+        :param n_list: List of cities to visit
+        :param curr_node: starter node
+        :return: returns the shortest path from curr_node to closest node in list and the cost to get there
         """
-        global curr, node_w
-        path_w = 0.0
+        global curr
         dijkstra = {i: float('inf') for i in self._graph.get_all_v()}  # turning all "weights" to infinity
         dijkstra[curr_node] = 0  # turns "weight" of starter node 0
         pq = []
@@ -158,8 +166,13 @@ class GraphAlgos:
             heapq.heapify(pq)
             node_w, curr = heapq.heappop(pq)  # pops lowest weighted value in pq
             if dijkstra[curr] == float('inf'):  # if popping a node who's weight is infinity, no path exists
-                return [], -1
-            if curr in n_list:  # found value in list
+                return []
+            flag = 0
+            for node in n_list:
+                if curr == node[0]:
+                    flag = 1
+                    break
+            if flag:
                 break
             for neighbor, w in self._graph.all_out_edges_of_node(curr).items():  # check neighbors
                 if dijkstra[neighbor] > dijkstra[curr] + w:
@@ -168,20 +181,19 @@ class GraphAlgos:
                     prev[neighbor] = curr  # updates prev
                     heapq.heappush(pq, (dijkstra[neighbor], neighbor))  # push id back into pq with new weight
         if len(pq) == 0:  # got to end of list and did not find a closest node
-            return [], -1
+            return []
         temp_node = curr
-        path_w += node_w
         dij_path = [temp_node]
         while prev[temp_node] is not None:
             dij_path.insert(0, prev[temp_node])
             temp_node = prev[temp_node]
-        return dij_path, node_w
+        return dij_path
 
     def centerPoint(self) -> (int, float):
         """
         Finds the node that has the shortest distance to it's farthest node. This function uses a helper function
         eccentricity.
-        return: The nodes id, min-maximum distance
+        :return: The nodes id, min-maximum distance
         """
         min_weight = float('inf')
         center_node = None
@@ -231,7 +243,6 @@ class GraphAlgos:
         :param agent: an agent
         :return: how long it will take for the given agent to catch all of the pokemon its currently after
         """
-
         time = 0
         if agent.getDest() == -1:
             position = agent.getSrc()
@@ -261,7 +272,7 @@ class GraphAlgos:
         ret_time, ret_path = self.shortest_path(position, pokemon.getOnEdge().getSrc())
         return time+ret_time, ret_path
 
-    def fastest_agent(self, pokemon: Pokemon) -> (int, list, float):
+    def fastest_agent(self, pokemon: Pokemon) -> (int, list):
         """
         this function checks which agent can catch this pokemon in the shortest time
         :param pokemon: a new pokemon that appeared in the game
@@ -276,13 +287,10 @@ class GraphAlgos:
                 min_time = ret_time
                 ans = agent.getID()
                 path = ret_path
-        return ans, path, min_time
+        return ans, path
 
-    def on_the_way(self, pokemon: Pokemon) -> bool:
+    def on_the_way(self, pokemon: Pokemon) -> int:
         for agent in self._agents.values():
-            for poke in agent.getPokemons():
-                if poke.getOnEdge().getSrc() == pokemon.getOnEdge().getSrc() and poke.getOnEdge().getDest() == pokemon.getOnEdge().getDest():
-                    return True
             if agent.getDest() == pokemon.getOnEdge().getSrc():
                 index = 0
             else:
@@ -290,33 +298,34 @@ class GraphAlgos:
                 for i, call in enumerate(agent.getFuture_calls()[:-1]):
                     if call[0] == pokemon.getOnEdge().getSrc():
                         if call[1] == pokemon.getOnEdge().getDest():
-                            return True
+                            return agent.getID()
                         index = i+1
                         break
             if index != -1:
                 for call in agent.getFuture_calls()[index:]:
                     if call[0] == pokemon.getOnEdge().getDest() or call[1] == pokemon.getOnEdge().getDest():
-                        print("FOUND AN ON THE WAY!!!!!")
-                        return True
-        return False
+                        return agent.getID()
+        return -1
 
     def allocate_agent_to_pokemon(self, pokemon: Pokemon) -> None:
         """
         this function allocates the pokemon to an agent
         :param pokemon: a new pokemon that appeared in the game
-        :param ttl: time left of the game
         """
-        ans = -1
-        if not self.on_the_way(pokemon):
-            ans, path, time = self.fastest_agent(pokemon)
-            self._agents[ans].add_pokemon(pokemon, path, time, self._graph.get_node(pokemon.getOnEdge().getSrc()), self._graph.get_node(pokemon.getOnEdge().getDest()))
-        self._pokemons[(pokemon.getPos(), pokemon.getType())] = ans
+        ans = self.on_the_way(pokemon)
+        if ans == -1:
+            ans, path = self.fastest_agent(pokemon)
+            self._agents[ans].add_pokemon(pokemon, path)
+            self.run_tsp(ans)
+        else:
+            self._agents[ans].add_pokemon_on_the_way(pokemon)
+        self._pokemons.append((pokemon.getPos(), pokemon.getType()))
 
     def call_move(self, current_time: float) -> list:
         """
-        this function checks if we need to make any moves
-        :param ttl: time left of the game
-        :return: return true if a move needs to be called
+        this function checks when the next move needs to be called
+        :param current_time: time left of the game
+        :return: return a list of all the times of when to call move
         """
         moves = []
         for agent in self._agents.values():
@@ -324,12 +333,12 @@ class GraphAlgos:
                 next_call = agent.getFuture_calls()[0]
                 if next_call[0] != -1:
                     if agent.getSrc() != next_call[0]:
-                        moves.append(current_time - 1000 * self._graph.get_edge((agent.getSrc(), next_call[0])).getWeight())
+                        moves.append(current_time - 1000 * self._graph.get_edge((agent.getSrc(), next_call[0])).getWeight() / agent.getSpeed())
                 else:
-                    moves.append(current_time - 1000 * self._graph.get_edge((agent.getSrc(), next_call[1])).getWeight())
+                    moves.append(current_time - 1000 * self._graph.get_edge((agent.getSrc(), next_call[1])).getWeight() / agent.getSpeed())
                     for poke in agent.getPokemons():
                         if poke.getOnEdge().getSrc() == agent.getSrc() and poke.getOnEdge().getDest() == next_call[1]:
-                            moves.append(current_time - 1000 * time_to_call_move(poke, self._graph.get_node(agent.getSrc()), self._graph.get_node(next_call[1])))
+                            moves.append(current_time - 1000 * time_to_call_move(poke, self._graph.get_node(agent.getSrc()), self._graph.get_node(next_call[1])) / agent.getSpeed())
         return moves
 
     def choosing_next_edge(self) -> List[tuple]:

@@ -19,10 +19,11 @@ pygame.display.set_caption("Ex4 - Gotta Catch E'm All!")
 clock = pygame.time.Clock()
 pygame.font.init()
 FONT = pygame.font.SysFont('Arial', 20, bold=True)
+small_font = pygame.font.SysFont('Arial', 12, bold=True)
 
 BLACK = Color(0, 0, 0)
 WHITE = Color(255, 255, 255)
-BLUE = Color(64, 80, 174)
+BLUE = Color(57, 126, 213)
 DARK_BLUE = Color(61, 72, 126)
 BROWN = Color(122, 61, 23)
 GREEN = Color(0, 255, 0)
@@ -81,20 +82,6 @@ def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
     pygame.draw.rect(screen, DARK_GRAY, time_to_end_button, 3)
     screen.blit(FONT.render(f"Time To End: {int(time_left // 1000)}", True, DARK_GRAY), (3 * screen.get_width() // 4 + screen.get_width() // 4 / 4 - 10, screen.get_height() // 15 // 4))
 
-    # draw nodes
-    for n in ga.getGraph().get_all_v().values():
-        x = my_scale(n.getPos()[0], x=True)
-        y = my_scale(n.getPos()[1], y=True)
-
-        # its just to get a nice antialiased circle
-        gfxdraw.filled_circle(screen, int(x), int(y), radius, BLUE)
-        gfxdraw.aacircle(screen, int(x), int(y), radius, WHITE)
-
-        # draw the node id
-        id_srf = FONT.render(str(n.getID()), True, WHITE)
-        rect = id_srf.get_rect(center=(x, y))
-        screen.blit(id_srf, rect)
-
     # draw edges
     for e in ga.getGraph().get_all_e().values():
         # find the edge nodes
@@ -110,24 +97,43 @@ def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
         # draw the line
         pygame.draw.line(screen, DARK_BLUE, (src_x, src_y), (dest_x, dest_y))
 
+    # draw nodes
+    for n in ga.getGraph().get_all_v().values():
+        x = my_scale(n.getPos()[0], x=True)
+        y = my_scale(n.getPos()[1], y=True)
+
+        # its just to get a nice antialiased circle
+        gfxdraw.filled_circle(screen, int(x), int(y), radius, BLUE)
+        gfxdraw.aacircle(screen, int(x), int(y), radius, WHITE)
+
+        # draw the node id
+        id_srf = FONT.render(str(n.getID()), True, WHITE)
+        rect = id_srf.get_rect(center=(x, y))
+        screen.blit(id_srf, rect)
+
     # draw agents
     for agent in ga.getAgents().values():
         pygame.draw.circle(screen, BROWN, (my_scale(agent.getPos()[0], x=True), my_scale(agent.getPos()[1], y=True)), 10)
+        id_srf = small_font.render(str(agent.getID()), True, WHITE)
+        rect = id_srf.get_rect(center=(my_scale(agent.getPos()[0], x=True), my_scale(agent.getPos()[1], y=True)))
+        screen.blit(id_srf, rect)
 
     # draw pokemons (note: should differ (GUI wise) between the up and the down pokemons (currently they are marked in the same way).
-    # for agent in ga.getAgents().values():
-    for x, y, type in ga.get_current_pokemons():
+    for x, y, type, value in ga.get_current_pokemons():
         if type == 1:
             color = GREEN
         else:
             color = RED
         pygame.draw.circle(screen, color, (my_scale(x, x=True), my_scale(y, y=True)), 10)
+        value_srf = small_font.render(str(int(value)), True, BLUE)
+        rect = value_srf.get_rect(center=(my_scale(x, x=True), my_scale(y, y=True)))
+        screen.blit(value_srf, rect)
 
     # update screen changes
     display.update()
 
     # refresh rate
-    clock.tick(600)
+    clock.tick(60)
 
     # check events
     for event in pygame.event.get():
@@ -136,6 +142,7 @@ def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
             return True
         if event.type == pygame.MOUSEBUTTONDOWN:
             if stop_button.collidepoint(event.pos):
+                pygame.quit()
                 return True
 
     return False
