@@ -7,13 +7,6 @@ from typing import List
 import Pokemon
 import Node
 from Point2D import Point2D
-# from src import Pokemon, Node
-# from src.Point2D import Point2D
-from GraphAlgos import distance
-
-
-def time_to_call_move(pokemon: Pokemon, src: Node, dest: Node) -> float:
-    return (distance(src.getPos(), pokemon.getPos()) / distance(src.getPos(), dest.getPos())) * pokemon.getOnEdge().getWeight()
 
 
 class Agent:
@@ -84,9 +77,12 @@ class Agent:
         else:
             self._future_calls += new_path[1:]
         self._future_calls.append([pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()])
-        last_time = self._future_moves[-1] if self._future_moves else 0
-        self._future_moves.append(last_time + ((time + time_to_call_move(pokemon, src, dest)) * 1000) / self._speed)
-        # self._pokemons.append(pokemon)
+        # last_time = self._future_moves[-1] if self._future_moves else 0
+        # self._future_moves.append(last_time + ((time + time_to_call_move(pokemon, src, dest)) * 1000) / self._speed)
+        self._pokemons.append(pokemon)
+
+    def delete_pokemon(self, pokemon: Pokemon) -> None:
+        self._pokemons.remove(pokemon)
 
     def getPokemons(self) -> list:
         return self._pokemons

@@ -20,6 +20,16 @@ clock = pygame.time.Clock()
 pygame.font.init()
 FONT = pygame.font.SysFont('Arial', 20, bold=True)
 
+BLACK = Color(0, 0, 0)
+WHITE = Color(255, 255, 255)
+BLUE = Color(64, 80, 174)
+DARK_BLUE = Color(61, 72, 126)
+BROWN = Color(122, 61, 23)
+GREEN = Color(0, 255, 0)
+RED = Color(255, 0, 0)
+DARK_GRAY = (43, 45, 47)
+
+
 
 def scale(data, min_screen, max_screen, min_data, max_data):
     """
@@ -35,11 +45,11 @@ def my_scale(data, x=False, y=False):
     if x:
         return scale(data, 50, screen.get_width() - 50, min_x, max_x)
     if y:
-        return scale(data, 100, screen.get_height() - 50, min_y, max_y)
+        return scale(data, 75, screen.get_height() - 50, min_y, max_y)
 
-def play(ga: GraphAlgos) -> bool:
+def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
 
-    global min_x, max_x, min_y, max_y
+    global min_x, max_x, min_y, max_y, points_button, moves_button, time_to_end_button
 
     # get data proportions
     min_x = min(list(ga.getGraph().get_all_v().values()), key=lambda n: n.getPos()[0]).getPos()[0]
@@ -47,23 +57,29 @@ def play(ga: GraphAlgos) -> bool:
     max_x = max(list(ga.getGraph().get_all_v().values()), key=lambda n: n.getPos()[0]).getPos()[0]
     max_y = max(list(ga.getGraph().get_all_v().values()), key=lambda n: n.getPos()[1]).getPos()[1]
 
-    # check events
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            return True
-
-    draw(ga)
-    return False
-
-
-def draw(ga: GraphAlgos):
-
-    # refresh rate
-    clock.tick(60)
+    stop_button = pygame.Rect(0 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
+    points_button = pygame.Rect(1 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
+    moves_button = pygame.Rect(2 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
+    time_to_end_button = pygame.Rect(3 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
 
     # refresh surface
-    screen.fill(Color(0, 0, 0))
+    screen.fill(BLACK)
+
+    points = info_obj["GameServer"]["grade"]
+    moves = info_obj["GameServer"]["moves"]
+
+    pygame.draw.rect(screen, RED, stop_button)
+    pygame.draw.rect(screen, DARK_GRAY, stop_button, 3)
+    screen.blit(FONT.render("STOP", True, DARK_GRAY), (0 * screen.get_width() // 4 + screen.get_width() // 4 / 2 - 35, screen.get_height() // 15 // 4))
+    pygame.draw.rect(screen, BLUE, points_button)
+    pygame.draw.rect(screen, DARK_GRAY, points_button, 3)
+    screen.blit(FONT.render(f"Overall Points: {points}", True, DARK_GRAY), (1 * screen.get_width() // 4 + screen.get_width() // 4 / 3 - 35, screen.get_height() // 15 // 4))
+    pygame.draw.rect(screen, BLUE, moves_button)
+    pygame.draw.rect(screen, DARK_GRAY, moves_button, 3)
+    screen.blit(FONT.render(f"Moves: {moves}", True, DARK_GRAY), (2 * screen.get_width() // 4 + screen.get_width() // 4 / 3 - 10, screen.get_height() // 15 // 4))
+    pygame.draw.rect(screen, BLUE, time_to_end_button)
+    pygame.draw.rect(screen, DARK_GRAY, time_to_end_button, 3)
+    screen.blit(FONT.render(f"Time To End: {int(time_left // 1000)}", True, DARK_GRAY), (3 * screen.get_width() // 4 + screen.get_width() // 4 / 4 - 10, screen.get_height() // 15 // 4))
 
     # draw nodes
     for n in ga.getGraph().get_all_v().values():
@@ -71,11 +87,11 @@ def draw(ga: GraphAlgos):
         y = my_scale(n.getPos()[1], y=True)
 
         # its just to get a nice antialiased circle
-        gfxdraw.filled_circle(screen, int(x), int(y), radius, Color(64, 80, 174))
-        gfxdraw.aacircle(screen, int(x), int(y), radius, Color(255, 255, 255))
+        gfxdraw.filled_circle(screen, int(x), int(y), radius, BLUE)
+        gfxdraw.aacircle(screen, int(x), int(y), radius, WHITE)
 
         # draw the node id
-        id_srf = FONT.render(str(n.getID()), True, Color(255, 255, 255))
+        id_srf = FONT.render(str(n.getID()), True, WHITE)
         rect = id_srf.get_rect(center=(x, y))
         screen.blit(id_srf, rect)
 
@@ -92,20 +108,34 @@ def draw(ga: GraphAlgos):
         dest_y = my_scale(dest.getPos()[1], y=True)
 
         # draw the line
-        pygame.draw.line(screen, Color(61, 72, 126), (src_x, src_y), (dest_x, dest_y))
+        pygame.draw.line(screen, DARK_BLUE, (src_x, src_y), (dest_x, dest_y))
 
     # draw agents
     for agent in ga.getAgents().values():
-        pygame.draw.circle(screen, Color(122, 61, 23), (my_scale(agent.getPos()[0], x=True), my_scale(agent.getPos()[1], y=True)), 10)
+        pygame.draw.circle(screen, BROWN, (my_scale(agent.getPos()[0], x=True), my_scale(agent.getPos()[1], y=True)), 10)
 
     # draw pokemons (note: should differ (GUI wise) between the up and the down pokemons (currently they are marked in the same way).
     # for agent in ga.getAgents().values():
     for x, y, type in ga.get_current_pokemons():
         if type == 1:
-            color = Color(0, 255, 0)
+            color = GREEN
         else:
-            color = Color(255, 0, 0)
+            color = RED
         pygame.draw.circle(screen, color, (my_scale(x, x=True), my_scale(y, y=True)), 10)
 
     # update screen changes
     display.update()
+
+    # refresh rate
+    clock.tick(600)
+
+    # check events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            pygame.quit()
+            return True
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            if stop_button.collidepoint(event.pos):
+                return True
+
+    return False

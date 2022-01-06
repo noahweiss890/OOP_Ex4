@@ -9,8 +9,9 @@ import Pokemon
 import Agent
 from Graph import Graph
 from Edge import Edge
+from Node import Node
 
-EPSILON = 0.001
+EPSILON = 0.0001
 
 
 def find_edge_with_pokemon(type: int, pos: tuple, graph: Graph) -> Edge:
@@ -23,6 +24,10 @@ def find_edge_with_pokemon(type: int, pos: tuple, graph: Graph) -> Edge:
 
 def distance(p1: tuple, p2: tuple) -> float:
     return math.sqrt(((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2))
+
+
+def time_to_call_move(pokemon: Pokemon, src: Node, dest: Node) -> float:
+    return (distance(src.getPos(), pokemon.getPos()) / distance(src.getPos(), dest.getPos())) * pokemon.getOnEdge().getWeight()
 
 
 class GraphAlgos:
@@ -226,7 +231,6 @@ class GraphAlgos:
         :param agent: an agent
         :return: how long it will take for the given agent to catch all of the pokemon its currently after
         """
-        #   (3,-1)   (5,6)    (-1,8)
 
         time = 0
         if agent.getDest() == -1:
@@ -274,31 +278,59 @@ class GraphAlgos:
                 path = ret_path
         return ans, path, min_time
 
-    def allocate_agent_to_pokemon(self, pokemon: Pokemon, ttl: float) -> None:
+    def on_the_way(self, pokemon: Pokemon) -> bool:
+        for agent in self._agents.values():
+            for poke in agent.getPokemons():
+                if poke.getOnEdge().getSrc() == pokemon.getOnEdge().getSrc() and poke.getOnEdge().getDest() == pokemon.getOnEdge().getDest():
+                    return True
+            if agent.getDest() == pokemon.getOnEdge().getSrc():
+                index = 0
+            else:
+                index = -1
+                for i, call in enumerate(agent.getFuture_calls()[:-1]):
+                    if call[0] == pokemon.getOnEdge().getSrc():
+                        if call[1] == pokemon.getOnEdge().getDest():
+                            return True
+                        index = i+1
+                        break
+            if index != -1:
+                for call in agent.getFuture_calls()[index:]:
+                    if call[0] == pokemon.getOnEdge().getDest() or call[1] == pokemon.getOnEdge().getDest():
+                        print("FOUND AN ON THE WAY!!!!!")
+                        return True
+        return False
+
+    def allocate_agent_to_pokemon(self, pokemon: Pokemon) -> None:
         """
         this function allocates the pokemon to an agent
         :param pokemon: a new pokemon that appeared in the game
         :param ttl: time left of the game
         """
-        ans, path, time = self.fastest_agent(pokemon)
-        self._agents[ans].add_pokemon(pokemon, path, time, self._graph.get_node(pokemon.getOnEdge().getSrc()), self._graph.get_node(pokemon.getOnEdge().getDest()))
+        ans = -1
+        if not self.on_the_way(pokemon):
+            ans, path, time = self.fastest_agent(pokemon)
+            self._agents[ans].add_pokemon(pokemon, path, time, self._graph.get_node(pokemon.getOnEdge().getSrc()), self._graph.get_node(pokemon.getOnEdge().getDest()))
         self._pokemons[(pokemon.getPos(), pokemon.getType())] = ans
 
-    def call_move(self, total_time: float, ttl: float) -> bool:
+    def call_move(self, current_time: float) -> list:
         """
         this function checks if we need to make any moves
         :param ttl: time left of the game
         :return: return true if a move needs to be called
         """
-        flag = False
+        moves = []
         for agent in self._agents.values():
-            if agent.getFuture_moves():
-                if abs(total_time - agent.getFuture_moves()[0] - ttl) < 2000:
-                    agent.getFuture_moves().pop(0)
-                    # self._pokemons.pop((agent.getPokemons()[0].getPos(), agent.getPokemons()[0].getType()))
-                    # agent.getPokemons().pop(0)
-                    flag = True
-        return flag
+            if agent.getDest() == -1 and agent.getFuture_calls():
+                next_call = agent.getFuture_calls()[0]
+                if next_call[0] != -1:
+                    if agent.getSrc() != next_call[0]:
+                        moves.append(current_time - 1000 * self._graph.get_edge((agent.getSrc(), next_call[0])).getWeight())
+                else:
+                    moves.append(current_time - 1000 * self._graph.get_edge((agent.getSrc(), next_call[1])).getWeight())
+                    for poke in agent.getPokemons():
+                        if poke.getOnEdge().getSrc() == agent.getSrc() and poke.getOnEdge().getDest() == next_call[1]:
+                            moves.append(current_time - 1000 * time_to_call_move(poke, self._graph.get_node(agent.getSrc()), self._graph.get_node(next_call[1])))
+        return moves
 
     def choosing_next_edge(self) -> List[tuple]:
         """
@@ -307,7 +339,7 @@ class GraphAlgos:
         """
         choices = []
         for agent in self._agents.values():
-            if agent.getDest() == -1:
+            if agent.getFuture_calls() and agent.getDest() == -1:
                 next_call = agent.getFuture_calls()[0]
                 if next_call[0] != -1:
                     choices.append((agent.getID(), next_call[0]))
@@ -317,4 +349,8 @@ class GraphAlgos:
                 else:
                     choices.append((agent.getID(), next_call[1]))
                     agent.getFuture_calls().pop(0)
+                    for poke in agent.getPokemons():
+                        if poke.getOnEdge().getSrc() == agent.getSrc() and poke.getOnEdge().getDest() == next_call[1]:
+                            agent.delete_pokemon(poke)
+                            break
         return choices
