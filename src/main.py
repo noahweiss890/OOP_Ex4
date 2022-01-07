@@ -28,33 +28,31 @@ if __name__ == '__main__':
 
     graphAlgo = GraphAlgos(graph)
 
-    center, _ = graphAlgo.centerPoint()
+    center, _ = graphAlgo.centerPoint()  # for making all of the agents start at the center node of the graph
 
     info = (client.get_info())
     info_obj = json.loads(client.get_info())
-    agent_amount = info_obj["GameServer"]["agents"]
+    agent_amount = info_obj["GameServer"]["agents"]  # finding out from the server how many agents there are in this case
 
     for i in range(agent_amount):
-        client.add_agent("{\"id\":" + str(center) + "}")
+        client.add_agent("{\"id\":" + str(center) + "}")  # create an agent
 
     move_list = []
-    EPSILON = 3
+    EPSILON = 3  # to be used for knowing when to call move
 
     # this commnad starts the server - the game is running now
     client.start()
-    total_time = float(client.time_to_end())
+    total_time = float(client.time_to_end())  # get the total time the game will go on for
 
-    info = (client.get_info())
-    info_obj = json.loads(client.get_info())
-
-    while client.is_running() == 'true' and float(client.time_to_end()) > 0 and info_obj["GameServer"]["moves"] < 10 * total_time:
+    # only stop if the server isn't running anymore, the tim eis under a tenth of a second, or if the moves is bigger than the allowed amount
+    while client.is_running() == 'true' and float(client.time_to_end()) > 100 and info_obj["GameServer"]["moves"] < 10 * (total_time // 1000):
 
         # get agents from the server and create Agent objects from them
         agents_obj = json.loads(client.get_agents())
         for agent_obj in agents_obj["Agents"]:
             agent = agent_obj["Agent"]
             x, y, _ = agent["pos"].split(",")
-            if agent["id"] in graphAlgo._agents:
+            if agent["id"] in graphAlgo._agents:  # check if this agent already exists, if he doesnt then create him, but if he does than update his info
                 graphAlgo._agents[agent["id"]].update_agent(agent["value"], agent["src"], agent["dest"], agent["speed"], (float(x), float(y)))
             else:
                 graphAlgo.add_agent(Agent(agent["id"], agent["value"], agent["src"], agent["dest"], agent["speed"], (float(x), float(y))))
@@ -99,5 +97,5 @@ if __name__ == '__main__':
 
     # game over:
     print(client.get_info())
-    client.stop()
-    # client.stop_connection()
+    client.stop_connection()
+    # client.stop()

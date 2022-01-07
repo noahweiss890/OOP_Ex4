@@ -21,6 +21,7 @@ pygame.font.init()
 FONT = pygame.font.SysFont('Arial', 20, bold=True)
 small_font = pygame.font.SysFont('Arial', 12, bold=True)
 
+# color RGBs:
 BLACK = Color(0, 0, 0)
 WHITE = Color(255, 255, 255)
 BLUE = Color(57, 126, 213)
