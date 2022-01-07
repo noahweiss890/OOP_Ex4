@@ -1,9 +1,8 @@
-"""
-represents an edge on the graph
-"""
-
 
 class Edge:
+    """
+    this class represents an edge on a graph
+    """
 
     def __init__(self, src: int, dest: int, weight: float):
         self._src = src

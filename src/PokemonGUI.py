@@ -14,6 +14,7 @@ WIDTH, HEIGHT = 1080, 720
 radius = 15
 pygame.init()
 
+# pygame settings
 screen = display.set_mode((WIDTH, HEIGHT), depth=32, flags=RESIZABLE)
 pygame.display.set_caption("Ex4 - Gotta Catch E'm All!")
 clock = pygame.time.Clock()
@@ -21,7 +22,7 @@ pygame.font.init()
 FONT = pygame.font.SysFont('Arial', 20, bold=True)
 small_font = pygame.font.SysFont('Arial', 12, bold=True)
 
-# color RGBs:
+# color RGBs
 BLACK = Color(0, 0, 0)
 WHITE = Color(255, 255, 255)
 BLUE = Color(57, 126, 213)
@@ -32,7 +33,7 @@ RED = Color(255, 0, 0)
 DARK_GRAY = (43, 45, 47)
 
 
-
+# scales functions
 def scale(data, min_screen, max_screen, min_data, max_data):
     """
     get the scaled data with proportions min_data, max_data
@@ -41,17 +42,23 @@ def scale(data, min_screen, max_screen, min_data, max_data):
     return ((data - min_data) / (max_data-min_data)) * (max_screen - min_screen) + min_screen
 
 
-# decorate scale with the correct values
-
 def my_scale(data, x=False, y=False):
     if x:
         return scale(data, 50, screen.get_width() - 50, min_x, max_x)
     if y:
         return scale(data, 75, screen.get_height() - 50, min_y, max_y)
 
-def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
 
-    global min_x, max_x, min_y, max_y, points_button, moves_button, time_to_end_button
+def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
+    """
+    function that displays the graph and all of the agents and pokemon on it
+    :param ga: a GraphAlgos object
+    :param info_obj: the game info as dictionary
+    :param time_left: the amount of time that is left until the game is over
+    :return: True if the user has ended the game, False otherwise
+    """
+
+    global min_x, max_x, min_y, max_y, points_box, moves_box, time_to_end_box
 
     # get data proportions
     min_x = min(list(ga.getGraph().get_all_v().values()), key=lambda n: n.getPos()[0]).getPos()[0]
@@ -59,10 +66,13 @@ def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
     max_x = max(list(ga.getGraph().get_all_v().values()), key=lambda n: n.getPos()[0]).getPos()[0]
     max_y = max(list(ga.getGraph().get_all_v().values()), key=lambda n: n.getPos()[1]).getPos()[1]
 
+    # create stop button
     stop_button = pygame.Rect(0 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
-    points_button = pygame.Rect(1 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
-    moves_button = pygame.Rect(2 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
-    time_to_end_button = pygame.Rect(3 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
+
+    # create info boxes
+    points_box = pygame.Rect(1 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
+    moves_box = pygame.Rect(2 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
+    time_to_end_box = pygame.Rect(3 * screen.get_width() // 4, 0, screen.get_width() // 4, screen.get_height() // 15)
 
     # refresh surface
     screen.fill(BLACK)
@@ -70,17 +80,18 @@ def play(ga: GraphAlgos, info_obj: dict, time_left: float) -> bool:
     points = info_obj["GameServer"]["grade"]
     moves = info_obj["GameServer"]["moves"]
 
+    # draw the button and boxes to the screen
     pygame.draw.rect(screen, RED, stop_button)
     pygame.draw.rect(screen, DARK_GRAY, stop_button, 3)
     screen.blit(FONT.render("STOP", True, DARK_GRAY), (0 * screen.get_width() // 4 + screen.get_width() // 4 / 2 - 35, screen.get_height() // 15 // 4))
-    pygame.draw.rect(screen, BLUE, points_button)
-    pygame.draw.rect(screen, DARK_GRAY, points_button, 3)
+    pygame.draw.rect(screen, BLUE, points_box)
+    pygame.draw.rect(screen, DARK_GRAY, points_box, 3)
     screen.blit(FONT.render(f"Overall Points: {points}", True, DARK_GRAY), (1 * screen.get_width() // 4 + screen.get_width() // 4 / 3 - 35, screen.get_height() // 15 // 4))
-    pygame.draw.rect(screen, BLUE, moves_button)
-    pygame.draw.rect(screen, DARK_GRAY, moves_button, 3)
+    pygame.draw.rect(screen, BLUE, moves_box)
+    pygame.draw.rect(screen, DARK_GRAY, moves_box, 3)
     screen.blit(FONT.render(f"Moves: {moves}", True, DARK_GRAY), (2 * screen.get_width() // 4 + screen.get_width() // 4 / 3 - 10, screen.get_height() // 15 // 4))
-    pygame.draw.rect(screen, BLUE, time_to_end_button)
-    pygame.draw.rect(screen, DARK_GRAY, time_to_end_button, 3)
+    pygame.draw.rect(screen, BLUE, time_to_end_box)
+    pygame.draw.rect(screen, DARK_GRAY, time_to_end_box, 3)
     screen.blit(FONT.render(f"Time To End: {int(time_left // 1000)}", True, DARK_GRAY), (3 * screen.get_width() // 4 + screen.get_width() // 4 / 4 - 10, screen.get_height() // 15 // 4))
 
     # draw edges

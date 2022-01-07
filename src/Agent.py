@@ -19,7 +19,10 @@ class Agent:
         self._future_calls = []
         self._pokemons = []
 
-    def update_agent(self, value: float, src: int, dest: int, speed: float, pos: tuple):
+    def update_agent(self, value: float, src: int, dest: int, speed: float, pos: tuple) -> None:
+        """
+        updates the agents info
+        """
         self._value = value
         self._src = src
         self._dest = dest
@@ -65,19 +68,34 @@ class Agent:
     def setFuture_calls(self, path: list):
         self._future_calls = path
 
+    def delete_pokemon(self, pokemon: Pokemon) -> None:
+        self._pokemons.remove(pokemon)
+
+    def getPokemons(self) -> list:
+        return self._pokemons
+
     def add_pokemon(self, pokemon: Pokemon, path: List[int]) -> None:
+        """
+        this function get a pokemon that was allocated to this agent and adds it to its future path and to its list of pokemons
+        :param pokemon: a pokemon that was allocated to this agent
+        :param path: a path to that pokemon from the last node on the agents current path
+        """
         new_path = []
         for i in path[:-1]:
-            new_path.append([i, -1])
-        if not self._future_calls:
+            new_path.append([i, -1])  # add it to a list with a -1 to signify that its just passing through this node
+        if not self._future_calls:  # if the current future calls list is empty
             self._future_calls = new_path[1:]
         else:
             self._future_calls += new_path[1:]
-        self._future_calls.append([pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()])
-        self._pokemons.append(pokemon)
+        self._future_calls.append([pokemon.getOnEdge().getSrc(), pokemon.getOnEdge().getDest()])  # add the call with the pokemon on it
+        self._pokemons.append(pokemon)  # add the pokemon to the agents list
 
     def add_pokemon_on_the_way(self, pokemon: Pokemon) -> None:
-        self._pokemons.append(pokemon)
+        """
+        this function adds a pokemon that is already on this agents path to its path
+        :param pokemon: a pokemon that was allocated to this agent
+        """
+        self._pokemons.append(pokemon)  # add the pokemon to the agents list
         if self._dest == pokemon.getOnEdge().getSrc() and self._future_calls[0][0] == pokemon.getOnEdge().getDest() and self._future_calls[0][1] == -1:
             self._future_calls[0] = [-1, self._future_calls[0][0]]
             return
@@ -90,9 +108,3 @@ class Agent:
                 elif call[0] == pokemon.getOnEdge().getSrc() and call[1] == -1 and self._future_calls[i+1][0] == pokemon.getOnEdge().getDest():
                     call[1] = pokemon.getOnEdge().getDest()
                     return
-
-    def delete_pokemon(self, pokemon: Pokemon) -> None:
-        self._pokemons.remove(pokemon)
-
-    def getPokemons(self) -> list:
-        return self._pokemons

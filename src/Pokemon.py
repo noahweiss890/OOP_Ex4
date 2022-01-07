@@ -1,11 +1,11 @@
-"""
-represents a pokemon
-"""
 import Edge
 from Point2D import Point2D
 
 
 class Pokemon:
+    """
+    this class represents a pokemon
+    """
 
     def __init__(self, value: float, type: int, pos: tuple, on_edge: Edge):
         self._value = value

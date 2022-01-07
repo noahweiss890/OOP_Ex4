@@ -6,6 +6,10 @@ from Point2D import Point2D
 
 
 class Node:
+    """
+    this class represents a node on a graph
+    """
+
     def __init__(self, id: int, pos: tuple):
         self._id = id
         self._pos = Point2D(pos)

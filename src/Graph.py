@@ -1,11 +1,13 @@
-"""
-represents a graph
-"""
 from Edge import Edge
 from Node import Node
 
 
 def build_graph(json: dict) -> (dict, dict):
+    """
+    this function deserialized a json object (dictionary) and creates a list a nodes and edges that represent a graph
+    :param json: a json object (dictionary) that has nodes and edges in it
+    :return: a tuple of two dictionaries that represent nodes and edges of a graph
+    """
     nodes = {}
     for n in json["Nodes"]:
         x, y, _ = n["pos"].split(",")
@@ -21,6 +23,9 @@ def build_graph(json: dict) -> (dict, dict):
 
 
 class Graph:
+    """
+    this class represents a graph
+    """
 
     def __init__(self, json: dict):
         self._nodes, self._edges = build_graph(json)
