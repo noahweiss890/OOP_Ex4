@@ -1,11 +1,13 @@
-"""
-represents a graph
-"""
-from src.Edge import Edge
-from src.Node import Node
+from Edge import Edge
+from Node import Node
 
 
 def build_graph(json: dict) -> (dict, dict):
+    """
+    this function deserialized a json object (dictionary) and creates a list a nodes and edges that represent a graph
+    :param json: a json object (dictionary) that has nodes and edges in it
+    :return: a tuple of two dictionaries that represent nodes and edges of a graph
+    """
     nodes = {}
     for n in json["Nodes"]:
         x, y, _ = n["pos"].split(",")
@@ -21,6 +23,9 @@ def build_graph(json: dict) -> (dict, dict):
 
 
 class Graph:
+    """
+    this class represents a graph
+    """
 
     def __init__(self, json: dict):
         self._nodes, self._edges = build_graph(json)
@@ -40,6 +45,9 @@ class Graph:
     def get_node(self, id: int) -> Node:
         return self._nodes[id]
 
+    def get_edge(self, src_dest: tuple) -> Edge:
+        return self._edges[src_dest]
+
     def get_all_v(self) -> dict:
         """
         returns a dictionary of all the nodes in the graph
@@ -56,10 +64,11 @@ class Graph:
         """
         returns a dictionary of all the in edges of a given node
         """
-        return self._nodes[id1].inEdges
+        return self._nodes[id1].getInEdges()
 
     def all_out_edges_of_node(self, id1: int) -> dict:
         """
         returns a dictionary of all the out edges of a given node
         """
-        return self._nodes[id1].outEdges
+        return self._nodes[id1].getOutEdges()
+
