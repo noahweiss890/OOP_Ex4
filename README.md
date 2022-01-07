@@ -14,7 +14,7 @@ More information on the different classes we built, alogrithms we used and funct
 
 How to run: Download the code and run the server with the following command in the terminal of the downloaded folder:
 
-./serverName x 
+java -jar Ex4_Server_v0.0.jar x 
 
 x will be a number between 0-15 representing which case the user would like to play. 
 
