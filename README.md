@@ -23,8 +23,5 @@ Then run the following command:
 
 python3 main.py
 
-Here is a short clip of the game in action! (Case 13)
 
-
-https://user-images.githubusercontent.com/93292546/148661565-7bd297de-b0d3-4c16-b088-70dc982f30ab.mov
 
