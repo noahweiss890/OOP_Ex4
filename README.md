@@ -22,3 +22,6 @@ x will be a number between 0-15 representing which case the user would like to p
 Then run the following command:
 
 python3 main.py
+
+
+
