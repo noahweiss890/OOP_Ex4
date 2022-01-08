@@ -383,7 +383,6 @@ class GraphAlgos:
         :param graph: the graph
         :return:
         """
-        print(type, pos)
         for e in self._graph.get_all_e().values():
             if (type > 0 and e.getSrc() < e.getDest()) or (type < 0 and e.getSrc() > e.getDest()):
                 if distance(self._graph.get_all_v().get(e.getSrc()).getPos(), pos) + distance(pos, self._graph.get_all_v().get(e.getDest()).getPos()) < distance(self._graph.get_all_v().get(e.getSrc()).getPos(), self._graph.get_all_v().get(e.getDest()).getPos()) + EPSILON:
