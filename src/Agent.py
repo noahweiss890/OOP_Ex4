@@ -1,6 +1,3 @@
-"""
-represents an agent
-"""
 
 from typing import List
 import Pokemon
@@ -8,6 +5,9 @@ from Point2D import Point2D
 
 
 class Agent:
+    """
+    this class represents an agent in the game
+    """
 
     def __init__(self, id: int, value: float, src: int, dest: int, speed: float, pos: tuple):
         self._id = id
@@ -18,6 +18,9 @@ class Agent:
         self._pos = Point2D(pos)
         self._future_calls = []
         self._pokemons = []
+
+    def __repr__(self):
+        return f'id:{self._id}, value:{self._value}, src:{self._src}, dest:{self._dest}, speed:{self._speed}, pos:{self._pos.getPosAsTuple()}'
 
     def update_agent(self, value: float, src: int, dest: int, speed: float, pos: tuple) -> None:
         """

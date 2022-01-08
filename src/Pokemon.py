@@ -4,7 +4,7 @@ from Point2D import Point2D
 
 class Pokemon:
     """
-    this class represents a pokemon
+    this class represents a pokemon in the game
     """
 
     def __init__(self, value: float, type: int, pos: tuple, on_edge: Edge):
