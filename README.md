@@ -16,9 +16,9 @@ We used the idea for allocating pokeman to agents and commanding moves from algo
 
 More information on the different classes we built, alogrithms we used and functions we created is available in the Wiki section of this project. 
 
-How to run: Download the code and run the server with the following command in the terminal of the downloaded folder:
+**How to run:** Download the code and run the server with the following command in the terminal of the downloaded folder:
 
-./serverName x 
+java -jar Ex4_Server_v0.0.jar x 
 
 x will be a number between 0-15 representing which case the user would like to play. 
 
@@ -26,3 +26,6 @@ x will be a number between 0-15 representing which case the user would like to p
 Then run the following command:
 
 python3 main.py
+
+
+
