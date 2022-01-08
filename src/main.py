@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     graphAlgo = GraphAlgos(graph)
 
-    center, _ = graphAlgo.centerPoint()  # for making all of the agents start at the center node of the graph
+    center = graphAlgo.centerPoint()  # for making all of the agents start at the center node of the graph
 
     info = (client.get_info())
     info_obj = json.loads(client.get_info())
