@@ -60,15 +60,8 @@ class Graph:
         """
         return self._edges
 
-    def all_in_edges_of_node(self, id1: int) -> dict:
-        """
-        returns a dictionary of all the in edges of a given node
-        """
-        return self._nodes[id1].getInEdges()
-
     def all_out_edges_of_node(self, id1: int) -> dict:
         """
         returns a dictionary of all the out edges of a given node
         """
         return self._nodes[id1].getOutEdges()
-

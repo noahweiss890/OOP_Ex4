@@ -14,14 +14,6 @@ from Node import Node
 EPSILON = 0.000001
 
 
-def find_edge_with_pokemon(type: int, pos: tuple, graph: Graph) -> Edge:
-    for e in graph.get_all_e().values():
-        if (type > 0 and e.getSrc() < e.getDest()) or (type < 0 and e.getSrc() > e.getDest()):
-            if distance(graph.get_all_v().get(e.getSrc()).getPos(), pos) + distance(pos, graph.get_all_v().get(e.getDest()).getPos()) < distance(graph.get_all_v().get(e.getSrc()).getPos(), graph.get_all_v().get(e.getDest()).getPos()) + EPSILON:
-                return e
-    print("POKEMON NOT ON GRAPH!")
-
-
 def distance(p1: tuple, p2: tuple) -> float:
     return math.sqrt(((p1[0]-p2[0])**2)+((p1[1]-p2[1])**2))
 
@@ -212,7 +204,7 @@ class GraphAlgos:
         min_weight = float('inf')
         center_node = None
         for n in self._graph.get_all_v():  # go through all nodes in the graph
-            ecc_w = self.eccentricity(n, min_weight)  # find out what the eccentricity of the node is
+            ecc_w = self._eccentricity(n, min_weight)  # find out what the eccentricity of the node is
             if ecc_w == float('inf'):  # if the ecc is inf then the graph is not connected and therefore there is no center
                 return -1
             if ecc_w != -1 and ecc_w < min_weight:  # if we found a shorter ecc, if the ecc is -1 then the ecc is higher than the current min_weight and stopped early
@@ -220,7 +212,7 @@ class GraphAlgos:
                 center_node = n
         return center_node
 
-    def eccentricity(self, node: int, minWeight: float) -> float:
+    def _eccentricity(self, node: int, minWeight: float) -> float:
         """
         This is a helper function for centerPoint to find out what the eccentricity from the given node
         :param node: id of node
@@ -251,11 +243,11 @@ class GraphAlgos:
                     heapq.heappush(pq, (dijkstra[v], v))
         return float('inf')
 
-    def time_to_complete_calls(self, agent: Agent) -> (float, int):
+    def _time_to_complete_calls(self, agent: Agent) -> (float, int):
         """
         this function calculates how long it will take for the given agent to catch all of the pokemon its currently after
         :param agent: an agent
-        :return: how long it will take for the given agent to catch all of the pokemon its currently after
+        :return: how long it will take for the given agent to catch all of the pokemon its currently after, and the id of the last node it will visit
         """
         time = 0
         if agent.getDest() == -1:  # if the agent is currently at a node
@@ -275,18 +267,18 @@ class GraphAlgos:
                     position = dest
         return time / agent.getSpeed(), position
 
-    def time_to_complete_calls_with_new_pokemon(self, agent: Agent, pokemon: Pokemon) -> (float, list):
+    def _time_to_complete_calls_with_new_pokemon(self, agent: Agent, pokemon: Pokemon) -> (float, list):
         """
-        this function calculates how long it will take to complete the given agent to catch the given pokemon
+        this function calculates how long it will take the given agent to catch the given pokemon
         :param agent: an agent
         :param pokemon: a new pokemon that appeared in the game
         :return: tuple of the time it takes to catch this pokemon, and the path it takes to do it
         """
-        time, position = self.time_to_complete_calls(agent)
+        time, position = self._time_to_complete_calls(agent)
         ret_time, ret_path = self.shortest_path(position, pokemon.getOnEdge().getSrc())
         return time+ret_time, ret_path
 
-    def fastest_agent(self, pokemon: Pokemon) -> (int, list):
+    def _fastest_agent(self, pokemon: Pokemon) -> (int, list):
         """
         this function checks which agent can catch this pokemon in the shortest time
         :param pokemon: a new pokemon that appeared in the game
@@ -296,14 +288,14 @@ class GraphAlgos:
         ans = -1
         path = []
         for agent in self._agents.values():  # go through all of the agents
-            ret_time, ret_path = self.time_to_complete_calls_with_new_pokemon(agent, pokemon)  # calculate how long it will take this agent to complete this call
+            ret_time, ret_path = self._time_to_complete_calls_with_new_pokemon(agent, pokemon)  # calculate how long it will take this agent to complete this call
             if ret_time < min_time:  # if this agent offers a shorter time to catch this pokemon
                 min_time = ret_time
                 ans = agent.getID()
                 path = ret_path
         return ans, path
 
-    def on_the_way(self, pokemon: Pokemon) -> int:
+    def _on_the_way(self, pokemon: Pokemon) -> int:
         """
         this function checks if the pokemon is on the way of any of the agents
         :param pokemon: a new pokemon that appeared in the game
@@ -331,9 +323,9 @@ class GraphAlgos:
         this function allocates the pokemon to an agent
         :param pokemon: a new pokemon that appeared in the game
         """
-        ans = self.on_the_way(pokemon)  # check if there is an agent that has this pokemon on its way
+        ans = self._on_the_way(pokemon)  # check if there is an agent that has this pokemon on its way
         if ans == -1:  # if there isnt a an gent that has this pokemon on the way it return -1
-            ans, path = self.fastest_agent(pokemon)  # find out who the fastest agent to catch this pokemon is
+            ans, path = self._fastest_agent(pokemon)  # find out who the fastest agent to catch this pokemon is
             self._agents[ans].add_pokemon(pokemon, path)  # add this pokemon to that agents list
             self.run_tsp(ans)  # run a tsp on this agents future call list to optimize the route
         else:
@@ -382,3 +374,17 @@ class GraphAlgos:
                             agent.delete_pokemon(poke)  # delete the pokemon from the agents allocated pokemon list
                             break
         return choices
+
+    def find_edge_with_pokemon(self, type: int, pos: tuple) -> Edge:
+        """
+        this function finds out which edge a given pokemon is sitting on
+        :param type: the pokemons type
+        :param pos: the pokemons position
+        :param graph: the graph
+        :return:
+        """
+        for e in self._graph.get_all_e().values():
+            if (type > 0 and e.getSrc() < e.getDest()) or (type < 0 and e.getSrc() > e.getDest()):
+                if distance(self._graph.get_all_v().get(e.getSrc()).getPos(), pos) + distance(pos, self._graph.get_all_v().get(e.getDest()).getPos()) < distance(self._graph.get_all_v().get(e.getSrc()).getPos(), self._graph.get_all_v().get(e.getDest()).getPos()) + EPSILON:
+                    return e
+        print("POKEMON NOT ON GRAPH!")

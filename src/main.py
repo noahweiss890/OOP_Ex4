@@ -6,7 +6,7 @@ import json
 from client import Client
 from Agent import Agent
 from Graph import Graph
-from GraphAlgos import GraphAlgos, find_edge_with_pokemon
+from GraphAlgos import GraphAlgos
 from Pokemon import Pokemon
 from PokemonGUI import play
 
@@ -52,8 +52,8 @@ if __name__ == '__main__':
         for agent_obj in agents_obj["Agents"]:
             agent = agent_obj["Agent"]
             x, y, _ = agent["pos"].split(",")
-            if agent["id"] in graphAlgo._agents:  # check if this agent already exists, if he doesnt then create him, but if he does than update his info
-                graphAlgo._agents[agent["id"]].update_agent(agent["value"], agent["src"], agent["dest"], agent["speed"], (float(x), float(y)))
+            if agent["id"] in graphAlgo.getAgents():  # check if this agent already exists, if he doesnt then create him, but if he does than update his info
+                graphAlgo.getAgents()[agent["id"]].update_agent(agent["value"], agent["src"], agent["dest"], agent["speed"], (float(x), float(y)))
             else:
                 graphAlgo.add_agent(Agent(agent["id"], agent["value"], agent["src"], agent["dest"], agent["speed"], (float(x), float(y))))
 
@@ -65,12 +65,12 @@ if __name__ == '__main__':
             poke = poke_obj["Pokemon"]
             x, y, _ = poke["pos"].split(",")  # get the x and y coordinates of the pokemon (ignore z coordinate)
             not_exists = 1
-            for (p_pos), p_type in graphAlgo.getPokemons():
+            for p_pos, p_type in graphAlgo.getPokemons():
                 if p_pos[0] == float(x) and p_pos[1] == float(y) and p_type == poke["type"]:  # check if this pokemon was already allocated to an agent
                     not_exists = 0
                     break
             if not_exists:  # if the pokemon is new, then allocate it to an agent
-                new_poke = Pokemon(poke["value"], poke["type"], (float(x), float(y)), find_edge_with_pokemon(poke["type"], (float(x), float(y)), graph))  # create a Pokemon object
+                new_poke = Pokemon(poke["value"], poke["type"], (float(x), float(y)), graphAlgo.find_edge_with_pokemon(poke["type"], (float(x), float(y))))  # create a Pokemon object
                 graphAlgo.allocate_agent_to_pokemon(new_poke)  # allocate the pokemon to an agent
             graphAlgo.add_current_pokemon((float(x), float(y), poke["type"], poke["value"]))  # add the pokemon to the current pokemon list
 
