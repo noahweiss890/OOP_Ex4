@@ -19,11 +19,12 @@ java -jar Ex4_Server_v0.0.jar x
 x will be a number between 0-15 representing which case the user would like to play. 
 
 
-Then run the following command:
+Then run the following command in a new terminal thats open in the src folder:
 
 python3 main.py
 
 **Results:** Our results of the game are as follows.
+
 
 Case 0: 32 moves, 79 grade
 
