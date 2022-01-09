@@ -31,7 +31,7 @@ Case 1: 208 moves, 543 grade
 
 Case 2: 69 moves, 214 grade
 
-Case 3: 241 moves, 69 741 grade
+Case 3: 241 moves, 741 grade
 
 Case 4: 71 moves, 220 grade
 
