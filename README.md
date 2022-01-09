@@ -23,5 +23,37 @@ Then run the following command:
 
 python3 main.py
 
+**Results:** Our results of the game are as follows.
+Case 0: 32 moves, 79 grade
+
+Case 1: 208 moves, 543 grade
+
+Case 2: 69 moves, 214 grade
+
+Case 3: 241 moves, 69 741 grade
+
+Case 4: 71 moves, 220 grade
+
+Case 5: 237 moves, 692 grade
+
+Case 6: 24 moves, 40 grade
+
+Case 7: 142 moves, 349 grade
+
+Case 8: 30 moves, 52 grade
+
+Case 9: 173 moves, 415 grade
+
+Case 10: 43 moves 140 grade
+
+Case 11: 584 moves, 1815 grade
+
+Case 12: 26 moves, 40 grade
+
+Case 13: 154 moves, 315 grade
+
+Case 14: 56 moves, 145 grade
+
+Case 15: 141 moves, 315 grade
 
 
